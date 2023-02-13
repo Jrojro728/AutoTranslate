@@ -35,4 +35,6 @@ public:
 	afx_msg void OnBnClickedButton1();
 	// 主输入框
 	CEdit Edit;
+	// 输出栏
+	CEdit Edit2;
 };

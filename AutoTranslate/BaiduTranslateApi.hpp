@@ -23,6 +23,9 @@ struct BaiduTranslateApiResponse
 		CString src;
 		CString dst;
 	}trans_result;
+
+	CString error_code;
+	CString error_msg;
 };
 
 /// <summary>
@@ -43,3 +46,11 @@ int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT B
 /// <param name="Salt">ÑÎ</param>
 /// <returns>×´Ì¬</returns>
 int GetSign(IN BaiduApiAccount Account, IN CString OriginalText, OUT CString &Sign, OUT CString& Salt);
+
+/// <summary>
+/// ÍøÖ·±àÂë¿Õ¸ñ
+/// </summary>
+/// <param name="SpaceString">´ø¿Õ¸ñµÄ×Ö·û´®</param>
+/// <param name="EncodedString">±àÂë¿Õ¸ñºóµÄ×Ö·û´®</param>
+/// <returns>×´Ì¬</returns>
+int UrlEncodeSpace(IN CString SpaceString, IN CString &EncodedString);

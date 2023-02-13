@@ -61,6 +61,7 @@ void CAutoTranslateDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT1, Edit);
+	DDX_Control(pDX, IDC_EDIT2, Edit2);
 }
 
 BEGIN_MESSAGE_MAP(CAutoTranslateDlg, CDialogEx)
@@ -103,6 +104,8 @@ BOOL CAutoTranslateDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	Edit.SetWindowText(L"在此输入要翻译的文字");
+	Edit2.SetWindowText(L"将会在此输出");
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -165,5 +168,5 @@ void CAutoTranslateDlg::OnBnClickedButton1()
 
 	BaiduTranslateApiResponse Out;
 	GetTranslatedText({ L"20230210001557204", L"f7uY42CO2r_UxSyByjAm" }, String, Out);
-	AfxMessageBox(Out.trans_result.dst);
+	Edit2.SetWindowTextW(Out.trans_result.dst);
 }

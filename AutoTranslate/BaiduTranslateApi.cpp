@@ -11,6 +11,7 @@ int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT B
 	GetSign(Account, OriginalText, Sign, Salt);
 	
 	//½âÎöÍøÖ·
+	UrlEncodeSpace(OriginalText, OriginalText);
 	uri::uri TranslateApiUrl("http://fanyi-api.baidu.com/api/trans/vip/translate");
 	TranslateApiUrl << uri::query("q=" + UnicodeToUtf8(OriginalText) + "&from=auto&to=zh&appid=" + UnicodeToUtf8(Account.AppID) + "&salt=" + UnicodeToUtf8(Salt) + "&sign=" + UnicodeToUtf8(Sign));
 	/*AfxMessageBox(CString(TranslateApiUrl.query().c_str()));*/
@@ -28,13 +29,18 @@ int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT B
 
 	if (Parser.parse(ResponseStr, Root))
 	{
+		try
+		{
+			TranslatedOut.error_code = Root["error_code"].asCString();
+			TranslatedOut.error_msg = Root["error_code"].asCString();
+		}
+		catch (Json::LogicError logicError) {}
 		TranslatedOut.from = Root["from"].asCString();
 		TranslatedOut.to = Root["to"].asCString();
-		
+
 		const Json::Value ArrayValue = Root["trans_result"];
 		TranslatedOut.trans_result.src = ArrayValue[0]["src"].asCString();
-		
-		TranslatedOut.trans_result.dst = ConvertUTF8ToCString(ArrayValue[0]["dst"].asCString());
+		TranslatedOut.trans_result.dst = ConvertUTF8ToCString(ArrayValue[0]["dst"].asCString());		
 	}
 	else
 	{
@@ -65,4 +71,12 @@ int GetSign(IN BaiduApiAccount Account, IN CString OriginalText, OUT CString &Si
 		return 1;
 
 	return 0;
-} 
+}
+
+int UrlEncodeSpace(IN CString SpaceString, IN CString& EncodedString)
+{
+	SpaceString.Replace(L" ", L"%20");
+	EncodedString = SpaceString;
+
+	return 0;
+}
