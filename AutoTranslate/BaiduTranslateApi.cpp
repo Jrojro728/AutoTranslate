@@ -4,16 +4,18 @@
 using namespace boost::network;
 using namespace boost::network::http;
 
-int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT BaiduTranslateApiResponse &TranslatedOut)
+int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT BaiduTranslateApiResponse& TranslatedOut, IN CString To)
 {
 	CString Sign;
 	CString Salt;
 	GetSign(Account, OriginalText, Sign, Salt);
-	
+
+	Account.AppID.Replace(L" ", L"");
+
 	//½âÎöÍøÖ·
 	UrlEncodeSpace(OriginalText, OriginalText);
 	uri::uri TranslateApiUrl("http://fanyi-api.baidu.com/api/trans/vip/translate");
-	TranslateApiUrl << uri::query("q=" + UnicodeToUtf8(OriginalText) + "&from=auto&to=zh&appid=" + UnicodeToUtf8(Account.AppID) + "&salt=" + UnicodeToUtf8(Salt) + "&sign=" + UnicodeToUtf8(Sign));
+	TranslateApiUrl << uri::query("q=" + UnicodeToUtf8(OriginalText) + "&from=auto&to=" + UnicodeToUtf8(To) + "&appid=" + UnicodeToUtf8(Account.AppID) + "&salt=" + UnicodeToUtf8(Salt) + "&sign=" + UnicodeToUtf8(Sign));
 	/*AfxMessageBox(CString(TranslateApiUrl.query().c_str()));*/
 
 	//http¿Í»§¶Ë
@@ -34,13 +36,14 @@ int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT B
 			TranslatedOut.error_code = Root["error_code"].asCString();
 			TranslatedOut.error_msg = Root["error_code"].asCString();
 		}
-		catch (Json::LogicError logicError) {}
-		TranslatedOut.from = Root["from"].asCString();
-		TranslatedOut.to = Root["to"].asCString();
+		catch (Json::LogicError logicError) {
+			TranslatedOut.from = Root["from"].asCString();
+			TranslatedOut.to = Root["to"].asCString();
 
-		const Json::Value ArrayValue = Root["trans_result"];
-		TranslatedOut.trans_result.src = ArrayValue[0]["src"].asCString();
-		TranslatedOut.trans_result.dst = ConvertUTF8ToCString(ArrayValue[0]["dst"].asCString());		
+			const Json::Value ArrayValue = Root["trans_result"];
+			TranslatedOut.trans_result.src = ArrayValue[0]["src"].asCString();
+			TranslatedOut.trans_result.dst = ConvertUTF8ToCString(ArrayValue[0]["dst"].asCString());
+		}
 	}
 	else
 	{
@@ -50,7 +53,7 @@ int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT B
 	return 0;
 }
 
-int GetSign(IN BaiduApiAccount Account, IN CString OriginalText, OUT CString &Sign, OUT CString &Salt)
+int GetSign(IN BaiduApiAccount Account, IN CString OriginalText, OUT CString& Sign, OUT CString& Salt)
 {
 	srand(rand());
 	for (size_t i = 0; i < 10; i++)
@@ -60,7 +63,7 @@ int GetSign(IN BaiduApiAccount Account, IN CString OriginalText, OUT CString &Si
 	int iSalt = rand();//Êý×ÖÑÎ
 	char aSalt[16] = "\0\0\0\0\0\0\0\0\0\0\0\0\0";//×Ö·ûÑÎ
 	_itoa_s(iSalt, aSalt, 10); //×ª»»int -> char[]
-    Salt = CString(aSalt); //ÑÎ×Ö·û´®
+	Salt = CString(aSalt); //ÑÎ×Ö·û´®
 
 	CString UnMD5String = (((Account.AppID + OriginalText) + Salt) + Account.SecretKey); //Î´½øÐÐMD5»ñÈ¡¹þÏ£µÄ×Ö·û´®
 	std::string UnMD5UTF8String = UnicodeToUtf8(UnMD5String);//Î´½øÐÐMD5»ñÈ¡¹þÏ£µÄUTF8×Ö·û´®
@@ -73,7 +76,7 @@ int GetSign(IN BaiduApiAccount Account, IN CString OriginalText, OUT CString &Si
 	return 0;
 }
 
-int UrlEncodeSpace(IN CString SpaceString, IN CString& EncodedString)
+int UrlEncodeSpace(IN CString SpaceString, OUT CString& EncodedString)
 {
 	SpaceString.Replace(L" ", L"%20");
 	EncodedString = SpaceString;

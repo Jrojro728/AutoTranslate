@@ -14,5 +14,8 @@
 #include <cmath>
 #include <string>
 #include <wincrypt.h>
+#include <thread>
+#include <cstdlib>
+#include <map>
 
 #endif //PCH_H

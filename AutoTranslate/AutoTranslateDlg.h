@@ -33,8 +33,16 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedButton1();
+
 	// 主输入框
 	CEdit Edit;
 	// 输出栏
 	CEdit Edit2;
+
+	// 自动翻译
+	CButton Check1;
+	// 自动复制
+	CButton Check2;
+	afx_msg void OnCbnSelchangeCombo1();
+	CComboBox ComboBox1;
 };

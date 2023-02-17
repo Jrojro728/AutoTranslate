@@ -21,15 +21,15 @@ class CAboutDlg : public CDialogEx
 public:
 	CAboutDlg();
 
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
-// 实现
+	// 实现
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -46,10 +46,94 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
+CAutoTranslateDlg* AutoTranslateDlg;
+
+std::list<CString> CanTranslateLauguageList = {
+	L"粤语", L"韩语", L"泰语", L"葡萄牙语", L"希腊语", L"保加利亚语", L"芬兰语",
+	L"斯洛文尼亚语", L"繁体中文", L"中文", L"文言文", L"法语", L"阿拉伯语", L"德语",
+	L"荷兰语", L"爱沙尼亚语", L"捷克语", L"瑞典语", L"越南语", L"英语", L"日语",
+	L"西班牙语", L"俄语", L"意大利语", L"波兰语", L"丹麦语", L"瑞典语", L"匈牙利语"
+};
+std::list<CString> CanTranslateLauguageCodeList = {
+	L"yue", L"kor", L"th", L"pt", L"el", L"bul", L"fin", L"slo", L"cht", L"zh",
+	L"wyw", L"fra", L"ara", L"de", L"nl", L"est", L"cs", L"swe", L"vie", L"en",
+	L"jp", L"spa", L"ru", L"it", L"pl", L"dan", L"rom", L"hu"
+};
+std::map<CString, CString> CanTranslateLanguageMap;
+std::pair<CString, CString> SelectDstLang = {L"", L"zh"};
+
+CString LastOriginalText;
+CString LastDstLang;
 
 // CAutoTranslateDlg 对话框
+void TranslateUsage(IN CString OriginalText, IN CEdit& TrigetEdit);
 
+void CheckCheckBox()
+{
+	for (;;)
+	{
+		Sleep(2 * 1000);
+		//打开剪切板
+		CString FromClipBoard;
+		OpenClipboard(NULL);
+		if (AutoTranslateDlg->Check1.GetCheck() == 1)
+		{
+			//获取剪切板的内容
+			HANDLE HandleData = GetClipboardData(CF_TEXT);
+			char* Buffer = (char*)GlobalLock(HandleData);
+			FromClipBoard = Buffer;
+			GlobalUnlock(HandleData);
+			CloseClipboard();
+			TranslateUsage(FromClipBoard, AutoTranslateDlg->Edit2);
+		}
+		if (AutoTranslateDlg->Check2.GetCheck() == 1)
+		{
+			//获取翻译后的内容
+			CString TranslateOutStr;
+			AutoTranslateDlg->Edit2.GetWindowTextW(TranslateOutStr);
 
+			//设置剪切板的内容
+			HGLOBAL ClipBuffer;
+			char* Buffer;
+			EmptyClipboard();
+			ClipBuffer = GlobalAlloc(GMEM_DDESHARE, TranslateOutStr.GetLength() * sizeof(wchar_t));
+			Buffer = (char*)GlobalLock(ClipBuffer);
+			strcpy(Buffer, LPCSTR(UnicodeToUtf8(TranslateOutStr).c_str()));
+			GlobalUnlock(ClipBuffer);
+			SetClipboardData(CF_TEXT, ClipBuffer);
+			CloseClipboard();
+		}
+	}
+
+	return;
+}
+
+/// <summary>
+/// 使用翻译api
+/// </summary>
+/// <param name="OriginalText">原文字</param>
+/// <param name="TrigetEdit">要输出到的输入框</param>
+void TranslateUsage(IN CString OriginalText, IN CEdit& TrigetEdit)
+{
+	if (LastOriginalText == OriginalText)
+	{
+		if (SelectDstLang.second == LastDstLang)
+		{
+			return;
+		}
+		LastDstLang = SelectDstLang.second;
+		return;
+	}
+
+	LastOriginalText = OriginalText;
+
+	BaiduTranslateApiResponse Out;
+	GetTranslatedText({ L"20230210001557204", L"f7uY42CO2r_UxSyByjAm" }, LastOriginalText, Out, LastDstLang);
+	if (Out.trans_result.dst != L"")
+		TrigetEdit.SetWindowTextW(Out.trans_result.dst);
+	else
+		TrigetEdit.SetWindowTextW(L"翻译时发生错误");
+}
 
 CAutoTranslateDlg::CAutoTranslateDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_AUTOTRANSLATE_DIALOG, pParent)
@@ -62,6 +146,9 @@ void CAutoTranslateDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT1, Edit);
 	DDX_Control(pDX, IDC_EDIT2, Edit2);
+	DDX_Control(pDX, IDC_CHECK1, Check1);
+	DDX_Control(pDX, IDC_CHECK2, Check2);
+	DDX_Control(pDX, IDC_COMBO1, ComboBox1);
 }
 
 BEGIN_MESSAGE_MAP(CAutoTranslateDlg, CDialogEx)
@@ -69,6 +156,7 @@ BEGIN_MESSAGE_MAP(CAutoTranslateDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON1, &CAutoTranslateDlg::OnBnClickedButton1)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &CAutoTranslateDlg::OnCbnSelchangeCombo1)
 END_MESSAGE_MAP()
 
 
@@ -77,6 +165,8 @@ END_MESSAGE_MAP()
 BOOL CAutoTranslateDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	AutoTranslateDlg = this;
 
 	// 将“关于...”菜单项添加到系统菜单中。
 
@@ -106,6 +196,21 @@ BOOL CAutoTranslateDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	Edit.SetWindowText(L"在此输入要翻译的文字");
 	Edit2.SetWindowText(L"将会在此输出");
+
+	std::thread t(CheckCheckBox);
+	t.detach();
+
+	int i = 0;
+	for (CString l : CanTranslateLauguageList)
+	{
+		ComboBox1.AddString(l);
+
+		std::list<CString>::iterator iter = CanTranslateLauguageCodeList.begin();
+		std::advance(iter, i);
+		CanTranslateLanguageMap.insert({ l, *iter });
+
+		i++;
+	}
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -163,10 +268,17 @@ HCURSOR CAutoTranslateDlg::OnQueryDragIcon()
 
 void CAutoTranslateDlg::OnBnClickedButton1()
 {
-	CString String;
-	Edit.GetWindowText(String);
+	CString Temp;
+	Edit.GetWindowText(Temp);
+	TranslateUsage(Temp, Edit2);
+}
 
-	BaiduTranslateApiResponse Out;
-	GetTranslatedText({ L"20230210001557204", L"f7uY42CO2r_UxSyByjAm" }, String, Out);
-	Edit2.SetWindowTextW(Out.trans_result.dst);
+
+void CAutoTranslateDlg::OnCbnSelchangeCombo1()
+{
+	CString SelectStr;
+	int index = ComboBox1.GetCurSel();
+	ComboBox1.GetLBText(index, SelectStr);
+
+	SelectDstLang = { SelectStr, CanTranslateLanguageMap[SelectStr] };
 }
