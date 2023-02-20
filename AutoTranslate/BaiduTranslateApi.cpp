@@ -13,6 +13,8 @@ int GetTranslatedText(IN BaiduApiAccount Account, IN CString OriginalText, OUT B
 	Account.AppID.Replace(L" ", L"");
 
 	//½âÎöÍøÖ·
+	if (To == L"")
+		To = L"zh";
 	UrlEncodeSpace(OriginalText, OriginalText);
 	uri::uri TranslateApiUrl("http://fanyi-api.baidu.com/api/trans/vip/translate");
 	TranslateApiUrl << uri::query("q=" + UnicodeToUtf8(OriginalText) + "&from=auto&to=" + UnicodeToUtf8(To) + "&appid=" + UnicodeToUtf8(Account.AppID) + "&salt=" + UnicodeToUtf8(Salt) + "&sign=" + UnicodeToUtf8(Sign));

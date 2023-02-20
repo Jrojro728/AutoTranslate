@@ -98,7 +98,7 @@ void CheckCheckBox()
 			EmptyClipboard();
 			ClipBuffer = GlobalAlloc(GMEM_DDESHARE, TranslateOutStr.GetLength() * sizeof(wchar_t));
 			Buffer = (char*)GlobalLock(ClipBuffer);
-			strcpy(Buffer, LPCSTR(UnicodeToUtf8(TranslateOutStr).c_str()));
+			strcpy_s(Buffer, UnicodeToUtf8(TranslateOutStr).length(), LPCSTR(UnicodeToUtf8(TranslateOutStr).c_str()));
 			GlobalUnlock(ClipBuffer);
 			SetClipboardData(CF_TEXT, ClipBuffer);
 			CloseClipboard();
@@ -115,17 +115,11 @@ void CheckCheckBox()
 /// <param name="TrigetEdit">要输出到的输入框</param>
 void TranslateUsage(IN CString OriginalText, IN CEdit& TrigetEdit)
 {
-	if (LastOriginalText == OriginalText)
-	{
-		if (SelectDstLang.second == LastDstLang)
-		{
-			return;
-		}
-		LastDstLang = SelectDstLang.second;
+	if (LastOriginalText == OriginalText && LastDstLang == SelectDstLang.second)
 		return;
-	}
 
 	LastOriginalText = OriginalText;
+	LastDstLang = SelectDstLang.second;
 
 	BaiduTranslateApiResponse Out;
 	GetTranslatedText({ L"20230210001557204", L"f7uY42CO2r_UxSyByjAm" }, LastOriginalText, Out, LastDstLang);
