@@ -53,6 +53,9 @@
     <ClCompile Include="BaiduTranslateApi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Copy.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="AutoTranslate.rc">

@@ -60,7 +60,7 @@ std::list<CString> CanTranslateLauguageCodeList = {
 	L"jp", L"spa", L"ru", L"it", L"pl", L"dan", L"rom", L"hu"
 };
 std::map<CString, CString> CanTranslateLanguageMap;
-std::pair<CString, CString> SelectDstLang = {L"", L"zh"};
+CString SelectDstLang;
 
 CString LastOriginalText;
 CString LastDstLang;
@@ -91,14 +91,16 @@ void CheckCheckBox()
 			//获取翻译后的内容
 			CString TranslateOutStr;
 			AutoTranslateDlg->Edit2.GetWindowTextW(TranslateOutStr);
+			if (TranslateOutStr == L"将会在此输出")
+				continue;
 
 			//设置剪切板的内容
 			HGLOBAL ClipBuffer;
 			char* Buffer;
 			EmptyClipboard();
-			ClipBuffer = GlobalAlloc(GMEM_DDESHARE, TranslateOutStr.GetLength() * sizeof(wchar_t));
+			ClipBuffer = GlobalAlloc(GMEM_DDESHARE, (TranslateOutStr.GetLength() + 1) * sizeof(wchar_t));
 			Buffer = (char*)GlobalLock(ClipBuffer);
-			strcpy_s(Buffer, UnicodeToUtf8(TranslateOutStr).length(), LPCSTR(UnicodeToUtf8(TranslateOutStr).c_str()));
+			strcpy_s(Buffer, (static_cast<unsigned long long>(TranslateOutStr.GetLength()) + 1) * sizeof(wchar_t), UnicodeToUtf8(TranslateOutStr).c_str());
 			GlobalUnlock(ClipBuffer);
 			SetClipboardData(CF_TEXT, ClipBuffer);
 			CloseClipboard();
@@ -112,21 +114,21 @@ void CheckCheckBox()
 /// 使用翻译api
 /// </summary>
 /// <param name="OriginalText">原文字</param>
-/// <param name="TrigetEdit">要输出到的输入框</param>
-void TranslateUsage(IN CString OriginalText, IN CEdit& TrigetEdit)
+/// <param name="TargetEdit">要输出到的输入框</param>
+void TranslateUsage(IN CString OriginalText, IN CEdit& TargetEdit)
 {
-	if (LastOriginalText == OriginalText && LastDstLang == SelectDstLang.second)
+	if (LastOriginalText == OriginalText && LastDstLang == SelectDstLang)
 		return;
 
 	LastOriginalText = OriginalText;
-	LastDstLang = SelectDstLang.second;
+	LastDstLang = SelectDstLang;
 
 	BaiduTranslateApiResponse Out;
 	GetTranslatedText({ L"20230210001557204", L"f7uY42CO2r_UxSyByjAm" }, LastOriginalText, Out, LastDstLang);
 	if (Out.trans_result.dst != L"")
-		TrigetEdit.SetWindowTextW(Out.trans_result.dst);
+		TargetEdit.SetWindowTextW(Out.trans_result.dst);
 	else
-		TrigetEdit.SetWindowTextW(L"翻译时发生错误");
+		TargetEdit.SetWindowTextW(L"翻译时发生错误: " + Out.error_msg);
 }
 
 CAutoTranslateDlg::CAutoTranslateDlg(CWnd* pParent /*=nullptr*/)
@@ -274,5 +276,5 @@ void CAutoTranslateDlg::OnCbnSelchangeCombo1()
 	int index = ComboBox1.GetCurSel();
 	ComboBox1.GetLBText(index, SelectStr);
 
-	SelectDstLang = { SelectStr, CanTranslateLanguageMap[SelectStr] };
+	SelectDstLang = CanTranslateLanguageMap[SelectStr];
 }
